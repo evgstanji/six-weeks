@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<title>Тренировки</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+/* Палитра: жёлтый, чёрный, белый — не зависит от темы Telegram */
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --text: #ffffff;
+  --hint: #8e8e93;
+  --accent: #ffcc00;
+  --accent-text: #000000;
+  --card: #161616;
+  --card2: #262626;
+  --link: #ffcc00;
+  --danger: #ff6b5e;
+  --ok: #ffcc00;
+  --line: rgba(255, 255, 255, 0.12);
+  --r: 18px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+}
+#app {
+  max-width: 520px; margin: 0 auto;
+  padding: 16px 16px calc(112px + env(safe-area-inset-bottom));
+  min-height: 100vh;
+}
+h1 { font-size: 24px; line-height: 1.2; margin: 4px 0 4px; letter-spacing: -0.3px; }
+h2 { font-size: 18px; margin: 24px 0 10px; }
+h3 { font-size: 16px; margin: 0; }
+p { margin: 0 0 12px; }
+.hint { color: var(--hint); }
+.small { font-size: 13px; }
+.center { text-align: center; }
+.row { display: flex; align-items: center; gap: 12px; }
+.grow { flex: 1; min-width: 0; }
+.mt { margin-top: 16px; }
+
+.card {
+  background: var(--card); border-radius: var(--r);
+  padding: 16px; margin-bottom: 12px;
+}
+.card.tap { cursor: pointer; }
+.card.tap:active { opacity: .7; }
+.prog { display: flex; gap: 14px; align-items: center; }
+.ico {
+  width: 52px; height: 52px; border-radius: 14px; flex: none;
+  display: grid; place-items: center; font-size: 28px; overflow: hidden;
+}
+.ico img, .ico svg { width: 100%; height: 100%; display: block; }
+.ico.lg { width: 60px; height: 60px; border-radius: 16px; }
+.ico-inline svg { width: 100%; height: 100%; display: block; }
+.btn.danger-solid { background: var(--danger); color: #000; }
+.ico-inline { overflow: hidden; width: 22px; height: 22px; border-radius: 6px; vertical-align: -5px; margin-right: 6px; }
+.chev { color: var(--hint); font-size: 24px; }
+.bar-track { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 8px; }
+.bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }
+
+.badge {
+  display: inline-block; font-size: 12px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent);
+}
+.badge.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+.badge.mute { background: var(--line); color: var(--hint); }
+
+button {
+  font: inherit; border: 0; cursor: pointer; color: inherit;
+  background: none; padding: 0;
+}
+.btn {
+  display: block; width: 100%; text-align: center;
+  background: var(--accent); color: var(--accent-text);
+  font-weight: 600; font-size: 17px;
+  padding: 15px 18px; border-radius: 14px;
+}
+.btn:active { opacity: .8; }
+.btn.sec { background: var(--card); color: var(--text); }
+.btn.ghost { background: transparent; color: var(--link); font-weight: 500; padding: 10px; }
+.btn.danger { background: transparent; color: var(--danger); font-weight: 500; padding: 10px; }
+.btn.small { font-size: 15px; padding: 10px 14px; width: auto; display: inline-block; }
+.bottom {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+}
+.bottom > div { max-width: 520px; margin: 0 auto; display: grid; gap: 8px; }
+
+/* степпер */
+.stepper { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 14px 0 4px; }
+.stepper button {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--card2); color: var(--text); font-size: 30px; line-height: 1; font-weight: 500;
+}
+.stepper button:active { background: var(--accent); color: var(--accent-text); }
+.stepper input {
+  width: 110px; text-align: center; font-size: 44px; font-weight: 700;
+  background: transparent; border: 0; color: var(--text); font-family: inherit;
+  -moz-appearance: textfield; appearance: textfield; padding: 0;
+}
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper input:focus { outline: none; }
+.stepper .val { font-size: 56px; font-weight: 700; min-width: 100px; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* подходы */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.chip {
+  min-width: 40px; text-align: center; padding: 6px 10px; border-radius: 10px;
+  font-weight: 600; font-variant-numeric: tabular-nums;
+  background: var(--card); color: var(--hint);
+}
+.chip.cur { background: var(--accent); color: var(--accent-text); }
+.chip.done { background: rgba(255, 204, 0, 0.16); color: var(--accent); }
+.chip.low { background: rgba(255, 255, 255, 0.14); color: #fff; }
+/* чипы на всю ширину экрана тренировки */
+.chips.full { flex-wrap: nowrap; gap: 6px; }
+.chips.full .chip { flex: 1 1 0; min-width: 0; padding: 10px 0; font-size: 17px; border-radius: 12px; }
+.counter-label { font-weight: 600; margin-bottom: 2px; }
+.target { font-size: 72px; font-weight: 800; line-height: 1; letter-spacing: -2px; }
+.sets-list { margin-top: 4px; }
+.sets-list div {
+  display: flex; justify-content: space-between; padding: 9px 0;
+  border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums;
+}
+.sets-list div:last-child { border-bottom: 0; }
+
+/* таймер */
+.ring-wrap { position: relative; width: 240px; height: 240px; margin: 12px auto; }
+.ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-bg { stroke: var(--line); }
+.ring-fg { stroke: var(--accent); transition: stroke-dashoffset .25s linear; }
+.ring-text {
+  position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
+}
+.ring-text .t { font-size: 56px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.adj { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* план */
+.week-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.day {
+  display: flex; align-items: flex-start; gap: 10px; padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+.day .dot {
+  width: 24px; height: 24px; border-radius: 50%; flex: none; margin-top: 1px;
+  display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  box-shadow: inset 0 0 0 1.5px var(--line); color: var(--hint);
+}
+.day.done .dot { background: var(--accent); color: var(--accent-text); box-shadow: none; }
+.day.next .dot { box-shadow: inset 0 0 0 2px var(--accent); color: var(--accent); }
+.day .sets { font-variant-numeric: tabular-nums; font-weight: 600; }
+.card.dim { opacity: .55; }
+.banner {
+  background: rgba(255, 204, 0, 0.14); color: var(--accent);
+  border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; font-size: 14px;
+}
+
+/* статистика */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.tile { background: var(--card); border-radius: var(--r); padding: 14px; }
+.tile .n { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.chart text { fill: var(--hint); font-size: 11px; font-family: inherit; }
+.chart .v { fill: var(--text); font-weight: 700; font-size: 13px; }
+.chart .bar { fill: var(--accent); }
+.chart .goal { stroke: rgba(255, 255, 255, 0.6); stroke-dasharray: 4 4; }
+.chart .goal-t { fill: #fff; }
+
+/* свой диалог подтверждения вместо системного confirm */
+.sheet-bg {
+  position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.7);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: fade .15s ease;
+}
+.sheet {
+  width: 100%; max-width: 520px; background: #1c1c1e;
+  border-radius: 22px 22px 0 0; display: grid; gap: 10px;
+  padding: 22px 16px calc(16px + env(safe-area-inset-bottom));
+}
+.sheet p { text-align: center; margin: 0 0 6px; font-size: 17px; }
+.logrow { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.logrow:first-child { border-top: 0; }
+
+.big-emoji { font-size: 64px; text-align: center; margin: 8px 0; }
+/* только opacity: transform у родителя ломает position: fixed у нижней кнопки */
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.day .sets { margin-left: 6px; }
+.logrow .small { margin-left: 6px; }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const DATA = {"pushups_100":{"program_id":"pushups_100","title":"100 Pushups in 6 Weeks","description":"6-week linear progression workout program based on Steve Speirs methodology with AMRAP sets and exhaustion benchmarks.","initial_test":{"description":"Perform as many clean pushups as possible in a single set to exhaustion.","tiers":[{"tier_id":"tier_1","label":"Beginner (< 6 reps)","min_reps":0,"max_reps":5,"start_week":1},{"tier_id":"tier_2","label":"Basic (6-10 reps)","min_reps":6,"max_reps":10,"start_week":1},{"tier_id":"tier_3","label":"Intermediate (11-20 reps)","min_reps":11,"max_reps":20,"start_week":1},{"tier_id":"tier_4","label":"Advanced (> 20 reps)","min_reps":21,"max_reps":null,"start_week":3,"target_tier_on_start":"tier_3"}]},"weeks":[{"week_number":1,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[2,3,2,2,3],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[6,6,4,4,5],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[10,12,7,7,9],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[3,4,2,3,4],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[6,8,6,6,7],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[10,12,8,8,12],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[4,5,4,4,5],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[8,10,7,7,9],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[11,13,9,9,13],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":null},{"week_number":2,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[4,6,4,4,6],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[9,11,8,8,11],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[14,14,10,10,15],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[5,6,4,4,7],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[10,12,9,9,13],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[14,16,12,12,17],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[5,7,5,5,8],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[12,13,10,10,15],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[16,17,14,14,20],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_2","title":"Exhaustion Test 1","description":"Rest at least 24-48 hours after Day 3, then test max reps to failure in a single set.","transitions":[{"min_reps":0,"max_reps":15,"next_tier":"tier_1"},{"min_reps":16,"max_reps":20,"next_tier":"tier_2"},{"min_reps":21,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":3,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[10,12,7,7,9],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[12,17,13,13,17],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[14,18,14,14,20],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[10,12,8,8,12],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[14,19,14,14,19],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[20,25,15,15,25],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[11,13,9,9,13],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[16,21,15,15,21],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[22,30,20,20,28],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":null},{"week_number":4,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[12,14,11,10,16],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[18,22,16,16,25],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[25,29,25,25,36],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[14,16,12,12,18],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[20,25,20,20,28],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[27,33,27,27,40],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[16,18,13,13,20],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[23,28,23,23,33],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[29,35,29,29,45],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_4","title":"Exhaustion Test 2","description":"Rest at least 24-48 hours after Day 3, then test max reps to failure in a single set.","transitions":[{"min_reps":0,"max_reps":30,"next_tier":"tier_1"},{"min_reps":31,"max_reps":40,"next_tier":"tier_2"},{"min_reps":41,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":5,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[17,19,15,15,20],"rest_seconds":[60,60,60,90],"amrap_last_set":true},"tier_2":{"sets":[28,35,25,22,35],"rest_seconds":[60,60,60,90],"amrap_last_set":true},"tier_3":{"sets":[36,40,30,24,40],"rest_seconds":[60,60,60,90],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[10,10,13,13,10,10,9,25],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[18,18,20,20,14,14,16,40],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[19,19,22,22,18,18,22,45],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[13,13,15,15,12,12,10,30],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[18,18,20,20,17,17,20,45],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[20,20,24,24,20,20,22,50],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_5","title":"Exhaustion Test 3","description":"Rest at least 24-48 hours after Day 3, then test max reps to failure in a single set.","transitions":[{"min_reps":0,"max_reps":45,"next_tier":"tier_1"},{"min_reps":46,"max_reps":55,"next_tier":"tier_2"},{"min_reps":56,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":6,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[25,30,20,15,40],"rest_seconds":[60,60,60,120],"amrap_last_set":true},"tier_2":{"sets":[40,50,35,25,50],"rest_seconds":[60,60,60,120],"amrap_last_set":true},"tier_3":{"sets":[45,55,35,25,55],"rest_seconds":[60,60,60,120],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[14,14,15,15,14,14,10,44],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[20,20,23,23,20,20,18,53],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[22,22,30,30,24,24,18,60],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[13,13,17,17,16,16,14,50],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[22,22,25,25,22,22,18,60],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[26,26,33,33,26,26,22,65],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"final_challenge_100","title":"Final 100 Pushups Challenge","description":"Rest 48-72 hours after Week 6 Day 3. Perform a single set to absolute failure aiming for 100 consecutive pushups.","target_reps":100}}]},"pullups_50":{"program_id":"pullups_50","title":"50 Pull-ups in 6 Weeks","description":"6-недельная программа линейной прогрессии тренировок по подтягиваниям на перекладине с AMRAP-подходами и контрольными тестами.","initial_test":{"description":"Выполните максимальное количество чистых подтягиваний хватом сверху (без рывков и раскачки) до отказа в одном подходе.","tiers":[{"tier_id":"tier_1","label":"Начальный (0–3 повторения)","min_reps":0,"max_reps":3,"start_week":1,"note":"Если чистых подтягиваний 0 — используйте негативные подтягивания или помощь резиновой петли с тем же объемом."},{"tier_id":"tier_2","label":"Базовый (4–7 повторений)","min_reps":4,"max_reps":7,"start_week":1},{"tier_id":"tier_3","label":"Средний (8–11 повторений)","min_reps":8,"max_reps":11,"start_week":1},{"tier_id":"tier_4","label":"Продвинутый (12+ повторений)","min_reps":12,"max_reps":null,"start_week":3,"target_tier_on_start":"tier_3"}]},"weeks":[{"week_number":1,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[1,2,1,1,1],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[3,4,2,2,3],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[5,6,4,4,5],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[1,2,2,1,2],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[3,4,3,3,4],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[5,6,5,5,6],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[2,2,2,1,2],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[4,5,3,3,4],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[6,7,5,5,7],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}}],"benchmark_test_after_week":null},{"week_number":2,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[2,3,2,2,3],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[4,5,4,4,5],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[6,7,6,6,8],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[2,3,3,2,3],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[5,6,4,4,6],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[7,8,6,6,9],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[3,3,2,2,4],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[5,6,5,5,7],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[8,9,7,7,10],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_2","title":"Контрольный тест 1","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход на максимум до отказа.","transitions":[{"min_reps":0,"max_reps":5,"next_tier":"tier_1"},{"min_reps":6,"max_reps":9,"next_tier":"tier_2"},{"min_reps":10,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":3,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[3,4,3,3,4],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[5,7,5,5,7],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[8,10,7,7,10],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[3,4,4,3,5],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[6,7,6,6,8],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[9,11,8,8,11],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[4,5,4,4,5],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[6,8,6,6,9],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[9,12,9,9,13],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}}],"benchmark_test_after_week":null},{"week_number":4,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[4,5,4,4,6],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[7,9,7,7,10],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[10,13,10,10,14],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[5,6,5,5,7],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[8,10,8,8,11],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[11,14,11,11,16],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[5,7,5,5,8],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_2":{"sets":[8,11,8,8,13],"rest_seconds":[90,90,90,90],"amrap_last_set":true},"tier_3":{"sets":[12,16,12,12,18],"rest_seconds":[90,90,90,90],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_4","title":"Контрольный тест 2","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход на максимум до отказа.","transitions":[{"min_reps":0,"max_reps":8,"next_tier":"tier_1"},{"min_reps":9,"max_reps":14,"next_tier":"tier_2"},{"min_reps":15,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":5,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[6,7,5,5,8],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_2":{"sets":[9,12,9,8,13],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_3":{"sets":[13,17,13,11,18],"rest_seconds":[90,90,90,120],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[6,8,6,6,9],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_2":{"sets":[10,13,10,9,15],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_3":{"sets":[14,18,14,12,20],"rest_seconds":[90,90,90,120],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[7,8,6,6,10],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_2":{"sets":[11,14,11,10,16],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_3":{"sets":[15,20,15,13,22],"rest_seconds":[90,90,90,120],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_5","title":"Контрольный тест 3","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход на максимум до отказа.","transitions":[{"min_reps":0,"max_reps":11,"next_tier":"tier_1"},{"min_reps":12,"max_reps":18,"next_tier":"tier_2"},{"min_reps":19,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":6,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[7,9,7,6,11],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_2":{"sets":[12,15,12,10,18],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_3":{"sets":[16,22,16,14,24],"rest_seconds":[90,90,90,120],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[8,10,7,7,12],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_2":{"sets":[13,16,13,11,20],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_3":{"sets":[18,24,18,15,26],"rest_seconds":[90,90,90,120],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[8,11,8,8,14],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_2":{"sets":[14,18,14,12,22],"rest_seconds":[90,90,90,120],"amrap_last_set":true},"tier_3":{"sets":[20,26,20,16,30],"rest_seconds":[90,90,90,120],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"final_challenge_pullups","title":"Финальный тест подтягиваний","description":"Отдохните 48–72 часа после окончания Недели 6. Выполните 1 подход на абсолютный максимум.","target_reps":50}}]},"situps_200":{"program_id":"situps_200","title":"200 Sit-ups in 6 Weeks","description":"6-недельная программа линейной прогрессии тренировок мышц брюшного пресса (скручивания / подъемы туловища) с AMRAP-подходами и контрольными тестами.","initial_test":{"description":"Выполните максимальное количество скручиваний или подъемов корпуса на пресс в одном подходе до отказа.","tiers":[{"tier_id":"tier_1","label":"Начальный (до 10 повторений)","min_reps":0,"max_reps":10,"start_week":1},{"tier_id":"tier_2","label":"Базовый (11–20 повторений)","min_reps":11,"max_reps":20,"start_week":1},{"tier_id":"tier_3","label":"Средний (21–30 повторений)","min_reps":21,"max_reps":30,"start_week":1},{"tier_id":"tier_4","label":"Продвинутый (более 30 повторений)","min_reps":31,"max_reps":null,"start_week":3,"target_tier_on_start":"tier_3"}]},"weeks":[{"week_number":1,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[7,8,5,5,7],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[11,12,9,9,12],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[15,18,12,12,16],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[9,10,7,7,9],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[13,14,11,11,14],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[17,20,14,14,18],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[11,12,8,8,12],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[15,16,13,13,17],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[19,23,16,16,22],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":null},{"week_number":2,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[13,15,11,11,14],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[17,19,15,15,20],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[22,26,19,19,28],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[14,16,12,12,16],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[19,21,17,17,23],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[24,29,22,22,32],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[15,18,13,13,18],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[21,24,19,19,27],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[26,33,24,24,36],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_2","title":"Контрольный тест 1","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход на максимум повторений на пресс до отказа.","transitions":[{"min_reps":0,"max_reps":22,"next_tier":"tier_1"},{"min_reps":23,"max_reps":32,"next_tier":"tier_2"},{"min_reps":33,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":3,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[15,18,13,13,18],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[21,25,18,18,25],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[25,31,23,23,31],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[16,20,15,15,20],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[23,28,21,21,28],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[27,35,26,26,35],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[18,23,17,17,23],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[25,32,24,24,32],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[30,40,29,29,40],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":null},{"week_number":4,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[20,25,20,20,28],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[28,35,25,25,38],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[33,42,33,33,50],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[22,28,22,22,32],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[31,39,28,28,43],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[37,48,37,37,58],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[24,32,24,24,36],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[34,44,32,32,48],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[40,55,40,40,65],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_4","title":"Контрольный тест 2","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход на максимум повторений на пресс до отказа.","transitions":[{"min_reps":0,"max_reps":42,"next_tier":"tier_1"},{"min_reps":43,"max_reps":58,"next_tier":"tier_2"},{"min_reps":59,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":5,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[26,32,24,22,35],"rest_seconds":[60,60,60,90],"amrap_last_set":true},"tier_2":{"sets":[38,48,36,30,50],"rest_seconds":[60,60,60,90],"amrap_last_set":true},"tier_3":{"sets":[48,60,45,36,60],"rest_seconds":[60,60,60,90],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[17,17,20,20,16,16,14,40],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[26,26,30,30,22,22,24,60],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[30,30,35,35,28,28,32,72],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[20,20,24,24,18,18,16,48],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[28,28,33,33,26,26,28,68],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[33,33,40,40,32,32,36,80],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_5","title":"Контрольный тест 3","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход на максимум повторений на пресс до отказа.","transitions":[{"min_reps":0,"max_reps":60,"next_tier":"tier_1"},{"min_reps":61,"max_reps":80,"next_tier":"tier_2"},{"min_reps":81,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":6,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[35,42,30,24,60],"rest_seconds":[60,60,60,120],"amrap_last_set":true},"tier_2":{"sets":[52,65,45,35,75],"rest_seconds":[60,60,60,120],"amrap_last_set":true},"tier_3":{"sets":[60,75,52,40,90],"rest_seconds":[60,60,60,120],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[22,22,25,25,22,22,18,68],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[32,32,38,38,32,32,28,85],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[36,36,48,48,38,38,32,98],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[22,22,28,28,25,25,22,80],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[36,36,42,42,36,36,32,96],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[44,44,55,55,44,44,36,110],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"final_challenge_situps","title":"Финальный тест: 200 повторений на пресс","description":"Отдохните 48–72 часа после окончания Недели 6. Выполните 1 подход на максимум, цель — 200 чистых скручиваний или подъемов корпуса без остановки.","target_reps":200}}]},"squats_200":{"program_id":"squats_200","title":"200 Squats in 6 Weeks","description":"6-недельная программа тренировок приседаний с собственным весом по методике линейной прогрессии с AMRAP-подходами и контрольными тестами.","initial_test":{"description":"Выполните максимальное количество глубоких приседаний с собственным весом в одном подходе до отказа.","tiers":[{"tier_id":"tier_1","label":"Начальный (до 15 приседаний)","min_reps":0,"max_reps":15,"start_week":1},{"tier_id":"tier_2","label":"Базовый (16–30 приседаний)","min_reps":16,"max_reps":30,"start_week":1},{"tier_id":"tier_3","label":"Средний (31–50 приседаний)","min_reps":31,"max_reps":50,"start_week":1},{"tier_id":"tier_4","label":"Продвинутый (более 50 приседаний)","min_reps":51,"max_reps":null,"start_week":3,"target_tier_on_start":"tier_3"}]},"weeks":[{"week_number":1,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[9,13,9,9,13],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[15,18,13,13,18],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[19,24,19,19,27],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[11,15,9,9,15],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[17,20,15,15,20],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[21,27,21,21,31],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[13,17,11,11,17],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[18,22,16,16,23],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[23,31,23,23,35],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":null},{"week_number":2,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[15,19,15,15,19],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[20,25,20,20,28],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[27,34,27,27,40],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[17,21,15,15,21],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[23,28,23,23,33],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[29,38,29,29,44],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[19,23,17,17,23],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[25,31,25,25,37],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[31,42,31,31,48],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_2","title":"Контрольный тест 1","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход приседаний на максимум до отказа.","transitions":[{"min_reps":0,"max_reps":30,"next_tier":"tier_1"},{"min_reps":31,"max_reps":45,"next_tier":"tier_2"},{"min_reps":46,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":3,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[19,24,19,19,27],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[27,33,24,24,33],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[32,42,32,32,45],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[21,27,21,21,31],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[29,36,29,29,37],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[36,48,36,36,52],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[23,31,23,23,35],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[31,40,31,31,42],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[40,55,40,40,60],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":null},{"week_number":4,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[25,33,25,25,40],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[36,44,33,33,49],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[44,56,44,44,68],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[29,37,29,29,44],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[40,51,40,40,56],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[48,64,48,48,76],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[33,43,33,33,49],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_2":{"sets":[44,56,44,44,65],"rest_seconds":[60,60,60,60],"amrap_last_set":true},"tier_3":{"sets":[53,72,53,53,85],"rest_seconds":[60,60,60,60],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_4","title":"Контрольный тест 2","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход приседаний на максимум до отказа.","transitions":[{"min_reps":0,"max_reps":55,"next_tier":"tier_1"},{"min_reps":56,"max_reps":75,"next_tier":"tier_2"},{"min_reps":76,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":5,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[35,42,30,30,45],"rest_seconds":[60,60,60,90],"amrap_last_set":true},"tier_2":{"sets":[50,60,45,40,65],"rest_seconds":[60,60,60,90],"amrap_last_set":true},"tier_3":{"sets":[60,75,55,45,75],"rest_seconds":[60,60,60,90],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[22,22,26,26,22,22,20,50],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[34,34,38,38,30,30,32,75],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[38,38,44,44,36,36,40,90],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[26,26,30,30,24,24,22,60],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[36,36,42,42,34,34,38,85],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[42,42,50,50,40,40,45,100],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"test_week_5","title":"Контрольный тест 3","description":"Отдохните 48 часов после Дня 3. Выполните 1 подход приседаний на максимум до отказа.","transitions":[{"min_reps":0,"max_reps":75,"next_tier":"tier_1"},{"min_reps":76,"max_reps":100,"next_tier":"tier_2"},{"min_reps":101,"max_reps":null,"next_tier":"tier_3"}]}},{"week_number":6,"days":[{"day_number":1,"tiers":{"tier_1":{"sets":[45,55,38,30,75],"rest_seconds":[60,60,60,120],"amrap_last_set":true},"tier_2":{"sets":[65,80,55,45,95],"rest_seconds":[60,60,60,120],"amrap_last_set":true},"tier_3":{"sets":[75,95,65,50,110],"rest_seconds":[60,60,60,120],"amrap_last_set":true}}},{"day_number":2,"tiers":{"tier_1":{"sets":[28,28,32,32,28,28,22,85],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[40,40,48,48,40,40,36,105],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[45,45,60,60,48,48,40,120],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}},{"day_number":3,"tiers":{"tier_1":{"sets":[28,28,36,36,32,32,28,100],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_2":{"sets":[45,45,52,52,45,45,40,120],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true},"tier_3":{"sets":[55,55,68,68,55,55,45,135],"rest_seconds":[45,45,45,45,45,45,45],"amrap_last_set":true}}}],"benchmark_test_after_week":{"test_id":"final_challenge_squats","title":"Финальный тест: 200 приседаний","description":"Отдохните 48–72 часа после окончания Недели 6. Выполните 1 подход приседаний на максимум, цель — 200 повторений без остановки.","target_reps":200}}]}};
+const ICONS = {"pushups_100": "data:image/webp;base64,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", "pullups_50": "data:image/webp;base64,UklGRh4QAABXRUJQVlA4WAoAAAAQAAAAvwAAvwAAQUxQSHcDAAABoCPbtus2Ou/dl9DKu2l4mkRmHg5VfwyIWCAHIJNjIgSLkbqbpIQRyEQeYIaU79572sKpcKszRsQEYJYiAHD1SfvlUX9E50J1jvpHL9tPrgKACH7FJAlY3tjpDbnQh72djWUgSZq3JAC2ul9I0lXNfPG4maqT5JfuFgBJcyXAWuuIpFd1LnTX6iSPWmuAzE/OuLD7lXQ1htDUya+7F5DznBSg9YFUZSBVyQ8toMxDznhwSFZnML2Shw+Q88wE6FRWY0CtsnYAmZHg1j6pDKqS+7cgMynY/sHqDKtX/thGmUFBU6kMrbI2KFMraOjG4JqzQZlSQUN1hteVDcpUChqqM8CubFCmIGiozhC7soFMJNh0cwbZzTchE+R0Y+jGMJsPb6Q8nqQDKgOtPEgylqDDylBXdiBjZNw+U4+V69lt5P8SeUtlsJVvRf5D8JSV4a58CvmXlC98douX+ecLOf1DsMfKgFfuQQCktDJwj5j7YCUlQPCcypArn0OAnPtx6+cMwX0zBt3sPqSgyxq1yi5KWhrQo+YcLCVsmDHsZhtAhzVulR2gR42bsodrp/S4OU+vPXRn4N0ftqmRU7bfRO/NES1yxqP30Xs/okfOOWL4PXrOc/+f+//c/+f+P/f//4MePWf4R/TIOUfvaZEzvj+K3tEbauSUb9rRaz90j5z7w2un9Lg5T6+hR42bsgd0WONW2QE2zOJmtoG0NKBHzTlYSgVd1qhVdlEE982iZnYfgpz71Jgp+zkDgudxew4BUloZuEfMfbCSEgDBHmvEKvcgAJDyhc9u8TL/fCGnf0DwlDVelU8h+HeRt9RoKd+K4D8zbp+px8r17Dbyf0HQYY1VZQeCcSUdUCOlPEiCsXO6MXSLk/nwRsrjQbDp5lFy800IJhU0VI+RKxsIJi9oqB4hVzYomGZBQ/X4uLJBwXQLGrpFx5wNCqZd0FRqbJS1QcH0C7Z/sHpcvPLHNgpmKbi1T2pUlNy/BcFsBehUVouIVdYOIJh1znhwSFaPhlfy8AFyxhwWoPWBVI2EKvmhBRTMZ864sPuVdLUYmDr5dfcCcsbcCrDWOiLpVX2xuVYnedRaAwTznATAVvcLSbqqmS8eN1N1kvzS3QIgCXOeJAHLGzu9IRf6sLezsQwkSfgVRQDg6pP2y6P+iL5YnKP+0cv2k6sAIIJZAgBWUDgggAwAAFA6AJ0BKsAAwAA+YS6URyQioiEktVmggAwJTdwGiw+uTsemfmQDT24QP8d2EVY+8/ln7TVWfr34c/Jbj+DQ+onuv+t/u34w9oD9EewB+nv+o/t/WR8wH66ftV7sH+t/YD3KftD7AH8h/r/pHexH6AH81/1Pplftp8H37U/td8B/7B//L2AMVj/BdJt52SJ/Zj8r/VP3A5NeAF+Pf0D/O72iAD6uf7TwwdQLvB/s/VV/Tf9rx79AD+V/339dfX6/5/8v53/pn9lvgL/Wn0sPYN+5SxRawTksRBtA5lX8FpfHZpYS4FitdUU/XJFyI5qSD9MyVPnbheMuTw5fsM+FEuzGh9tLU5HiT6kG1bMDQOenCoJZRe0fCKga1zT0LUgRQOWZI0aUJa4n+gYg1UxTN0I8hO3NxlPlxwMQsn5Mophqi6KRYV7AyV5+ZywY3364wn3q4ST4ksLjwMhLKQVU2VSUSj7C9LnUklfpJte1jVEJ11UULoqoKLKKwXfw6Urr4fSO07jo4SQm30EG5wTdjFjJ/IR0zhKG+sROEInG7Q+X5GcP9jB4H+1hiihWbE4btmJfiy/Of0qpKJR5VqLtHiNXEpvB3LwmyK9l6luJyjAR1fkJtHba4AOmR4AA/vAm//9yG//vBN//7iEX1gr/2rFZhKk+v4k56pRonzWvQB6sf/7YFozH1IAPLvTZ4uGyGK5XRqjF2lS7S1XhHscWffy/r5O+qf4GGeGRjzfl7kKPf+o03btH5ga+8KzO4PESPTFL6060yo71uSk7Iunli7dlZgXjEsSjZ4bQ8htOudeNB+H5jwH3QQ+x0h6FVHJul/4Xu9jvFfPnj+QPKWK4IPlxI+XmMCqP3PEo8tufuTSIC9e/hNp5gNmS6AtPRTCXhCiYe6M1XSlYelIx8EPSL4+UWv4lWfYoVAjbqaP5yAbFVyNRBKATYu1Wn4DAXEvnXIgwUAGG3D7GYPaxSKUTDxHY5Hxy//IiotR7hlOyyPaRFZ/1e/rcJHvBbQ28nnsN/cslKEyLePrOql2PX6Lca4EI5Oxidp+1FXijO2koWVJShDEyQyox8HF9HybJKa6K3nJ8Y/glUUa4oWL9/drqucz06dYWJOo7WgODy1Pg7b2zMrnTxrPQc+AhVKrO5jIWmzNKMjV88Bj00NaEaAARGuMCvN58IFYt74s7KfH6rgCZg+ibmAz5bDEuYsfyr/fPJdZhiN57F4TDdehn8PH8wnP62+JmQM4pUrYIIbpCqv6/KSOxnsHiIl1wsESxA7oXax/SczlIhksNRRptajG2MDtO/M6ObEOU7WM/VEc/HTRm5cm+lTR+mEmurfQiTDoUgCHPIfVOGmsw2DKXYdvITJHOs/fJvmbwCUdtx7x3URXxl+m/4QnMuLSSSVKhA3V6Zbefnp6bXi8SXChMajSqc7VeTGrjAh76GtNCgvQDmthomO3kTJrmzRKMrdimxPRM4KZvYH8uQgVOrZVcp0CG2boOBuVVmwjvtnBI8TnI8GEXhUg6wxfHBj1mh6KMEEM3DjbWgwHjyBQC5MaGc5+TjmvVrZBKhlKOsu7jfw1XJOt0X7SxGMN7+uJL5vMzQdoqk/dir78SU2r99KPQtammpJyhQF6qc0pVCxzLOEbEAA0Em8UwZmLmvx75ZxrdYKXMa1+9/IqrpU4dCDWcuhu1r/xBQPnCsedrtQ9Axe1fpDeYIeaHLgU3X6XEIsiwtbivFJsLVjDLXyjNyEY6eiW5y3NskNMEcPelioej4/jzzaBRKiaeYXvxqqp+apCUQNenlmoUygtWYulFoCNUx7du80uzsDOVjk8RJsqdt+0ppmwCp078ympD4NBxlR2J/n4+4F54HMMM2QMZ8tuif/hOPNE00tk6FU8SXJK2CXp0U2nS62tWmsW9NaamyehTN5cQ1rEsN5A+zD4xh78L1OZQe0X9ycyI1C4B97ziDXA+F6WOD0c5t9PXeonhsUdIYKZxZMYdp6gdHLXZvvxzvQ6pokDsvppcXpKrkPQaS+DWtFJEZLWNDH/+IVN0q34Y10Rr/uqllhHzqIlmalLX0naOCe8OgS8YJ6ghD1LiuEAl6QfiHfsTc0Tt8rTDxiJUv4Wpz4Wi+X7N3qlXVeh59lcB5ZjrTatKTZI3n9UTGQBhKK2SARK+F384JNLxgWbkP6vJ7CU5joKhaD6B+1l0H/eJLt/J3kPNnxixfKs79nOABk1UmADENpPdihNPU2CFD6klXMwNyh/t4Nd1IXOf9Me2zO9LfFl1XAVFO+73kqr7hWgFbwFhSHoW1ON1/zTQqufGsxVY1duhbuuDZN9OO5S0bzR+t64Drbh0G3xFPFAbZv+TXeFWoVVbN0ij4jyDWR5yN9eYiiPvN5oO9vxZ6vW5REXqAZtXYKEMvf86g+NVTa/yMT+x/Zmem5Adn/9P3EUSuYIv3KeE2W5GciQHGkwGQMAWARHjlLZ9+wHY/Ruz1O+MLQq0a3pUImfb35ROjXDuwemKRJbRCWO2696BFiqr4mOTepY2V216LD3DkOesvrzzUaUwCC7+u/aHonH0Pl/29+UYIL4j1mrhWbrU1Bg3b5jAYS4xMKcW6/rzAVFwZVjzuJIRATGEYiU/glJiCp59uldbER8jAwpN1GZyWLRQwuY0dpCOM7/qeYoV0OT2buguM1oHq036vQKW28E5Ouese+vusMFk8Tl5bA+F7zeF8uurAE7/hP+dAR+Hi0RQCSAzUX2wBpz8tjlYPt8Jc1+6vm/DxK1revoDF35bb/KIPmTj7S7RJKHUdzQfhymSQV4SCA2h3uA6gqTlcDi6IN/4IGbYdR/2JS+nANmXlPrReHPExVkz1e5pLwasJMramnd7EvwFKRNk0sYATOApk9Wy3xv/g9i9SU/CCAa4UzqEdwmGwafEBgthE0hj3FO+8fQmdbmE11AVQXMFYhLY5jJL/JA5pzoBQB6+bnvtaBBeMse0x/JXgOcm9F9264ses4O2d4/Zicc1ccddT6Uvz+g4y19p+MSkKI3MGK3SCE8pIHv2dAf2F1tpEsmXZfpNkXUfi4JLQuKg/8DHsAIW0OoTHcJlrWundpJR0KgjaoAi38Qa7+VNucPhxbeVbsXXcJLAu81wPN7DhnovOEf8xmL++fp+xoyEMShYquXvXSGKHbhA6YY9/2mr5eL7ULV+HJ4zq0Q/pUba8rd9TnWM1FpN0lutZ+xbuhl5p4z4kiXbuPyy11it/s9HN+OVCCbvsu3x6rmCjziwCR5Qu/8SOjhochOwUEYRRF2s9rFoUmPovTJktAiM3IRvvaFS6FqI//00iq2AiCfbmVaCtP5+b68WPqeGF2n32Q4esn+eekQTGe2efX1M2szIaTQ+aT6sKHbDLTxmuvxBW7/7l0lBGjTW5DVdC0yM2xCu+fKSAy8+T0K77vL+PSIXKQ9OqrBE8aNsDo9gI79KsQZwFZevnwmhsp9RwsUqqPrvvGQDZPYAJOB82qnBM+52LFQFwpQq0EVEQT/6r7NlTtt+FPfk/E1G8JcDj+v7Y4GQQIyCpWVJGU3iIY1vGHN3FKo7EDO0p3QqmRbT2HmpDRJCpwP9zRnwe3NIYBJDFOB80RacFOKx/F0UoEDgil+F90VubRT12dhlNaXXoUvldz5FhJSD3EL/w8GgSejPt8oVuUPJ2WStk6HVTVnAV+/a1h8s0rAcmZUEMlIrFi3ZaKOEDt5GPF+pDEMGpSWtlIBQPpxi30lkE/Tqdaz/A2pRgAFlK/m2fKhwgAab+OZjy+wGGGcypIFAo0NrQWp74BKdSNcGkhtePXyaI/0UwE+0YbmOfTMotemHflZ4An0LyNEA+KZeqdLNMc8PuZ6K4M+dUsvLw612teHQyBw7wBiYhwsH9243D5AI0WYHtrWczJxawqQkG+SoI7M7w3F40/dRCT5iXINwFTI+711CgUvPCZw/6g6NcF26iinhFxrO0XMbJ5x30dgEJmb+jh6Zjrp9WEGbXJEO4eOEmDvOn9K5lOcIUS/4rDtVXCE5n94NOGw28Q+c7t7vKpMq/pVp/R8ln9PIyUd9x/7NO0d5G9FF8tZJK/huYf36Asb9Rh5QUeY1SVLZdirDr5I5kn4TlvfZHL9ygsXLj7cegMGwWJ+OHZrdUZTWQyWH8Ggv305bGql+6TGw3G4T5tSoXEI//8pM//yoL//8pR6R1Y/zyEf8+kv8nxmgSZtM0PX+rh04LQa3lTADsTXk8Z50v4uToSnO8yO5kbL7U+b/kTNM9S0KkXAk///LRAAA", "situps_200": "data:image/webp;base64,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", "squats_200": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5NiA5NiI+CjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0iZyIgY3g9IjUwJSIgY3k9IjAlIiByPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMzYzNjM2MiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwNTA1MDUiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjMiIGZpbGw9InVybCgjZykiLz4KPGcgc3Ryb2tlPSIjZmZjYzAwIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTE5IDIyIFY0NCBNMTUgMjYgTDE5IDIyIEwyMyAyNiIvPjxwYXRoIGQ9Ik0yNSAyMiBWNDQgTTIxIDQwIEwyNSA0NCBMMjkgNDAiLz48L2c+CjxsaW5lIHgxPSIxNCIgeTE9Ijc2IiB4Mj0iODIiIHkyPSI3NiIgc3Ryb2tlPSIjZmZjYzAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8ZyBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgo8cGF0aCBkPSJNNDcgMzIgTDQxIDUyIEw1NiA1NCBMNTAgNzQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxMC41Ii8+CjxwYXRoIGQ9Ik00NyAzMiBMNDEgNTIgTDU2IDU0IEw1MCA3NCIgc3Ryb2tlPSIjZmZjYzAwIiBzdHJva2Utd2lkdGg9IjcuNSIvPgo8cGF0aCBkPSJNNDcgMzYgTDcyIDM3IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNyIvPgo8cGF0aCBkPSJNNDcgMzYgTDcyIDM3IiBzdHJva2U9IiNmZmNjMDAiIHN0cm9rZS13aWR0aD0iNC41Ii8+CjxwYXRoIGQ9Ik01MCA3NCBMNTcgNzQiIHN0cm9rZT0iI2ZmY2MwMCIgc3Ryb2tlLXdpZHRoPSI1Ii8+PC9nPgo8Y2lyY2xlIGN4PSI1MCIgY3k9IjIyIiByPSI3LjUiIGZpbGw9IiNmZmYiLz4KPC9zdmc+Cg=="};
+</script>
+<script>
+/* Чистая логика программы: без DOM и без Telegram. Проверяется на node. */
+(function (root) {
+  'use strict';
+
+  var DAYS_PER_WEEK = 3;
+
+  function tierNum(id) { return parseInt(String(id).replace('tier_', ''), 10); }
+
+  function tierRange(t) {
+    if (t.max_reps == null) return t.min_reps + '+';
+    return t.min_reps + '–' + t.max_reps;
+  }
+
+  function findTier(P, reps) {
+    var tiers = P.initial_test.tiers;
+    for (var i = 0; i < tiers.length; i++) {
+      var t = tiers[i];
+      if (reps >= t.min_reps && (t.max_reps == null || reps <= t.max_reps)) return t;
+    }
+    return tiers[tiers.length - 1];
+  }
+
+  function weekDef(P, w) {
+    for (var i = 0; i < P.weeks.length; i++) if (P.weeks[i].week_number === w) return P.weeks[i];
+    return null;
+  }
+
+  function newState(P, reps, now) {
+    var t = findTier(P, reps);
+    return {
+      v: 1,
+      p: P.program_id,
+      m: reps,                       // стартовый максимум
+      sw: t.start_week,              // с какой недели начинаем
+      st: t.target_tier_on_start || t.tier_id, // уровень на старте
+      s0: now,                       // дата старта
+      d: {},                         // выполненные тренировки: "нед-день" -> {t, k, r}
+      T: {},                         // результаты контрольных: неделя -> {r, n, t} или {x:1, n}
+      a: null,                       // тренировка в процессе
+      ar: { r: 0, w: 0 },            // архив повторённых недель (повторы, тренировки)
+      f: false,                      // программа завершена
+      u: now
+    };
+  }
+
+  // Уровень, по которому идёт неделя w: стартовый, затем меняется после каждого контрольного теста
+  function tierAtWeek(P, st, w) {
+    var t = st.st;
+    for (var i = 0; i < P.weeks.length; i++) {
+      var wk = P.weeks[i];
+      if (wk.week_number >= w) break;
+      var r = st.T[wk.week_number];
+      if (r && r.n) t = r.n;
+    }
+    return t;
+  }
+
+  function getWorkout(P, st, w, d, tierOverride) {
+    var wk = weekDef(P, w);
+    var day = null;
+    for (var i = 0; i < wk.days.length; i++) if (wk.days[i].day_number === d) day = wk.days[i];
+    var tier = tierOverride || tierAtWeek(P, st, w);
+    var cfg = day.tiers[tier];
+    return {
+      week: w, day: d, tier: tier,
+      sets: cfg.sets.slice(),
+      rest: cfg.rest_seconds.slice(),
+      amrapLast: !!cfg.amrap_last_set
+    };
+  }
+
+  function key(w, d) { return w + '-' + d; }
+
+  function nextAction(P, st) {
+    if (st.f) return { type: 'finished' };
+    for (var i = 0; i < P.weeks.length; i++) {
+      var wk = P.weeks[i];
+      if (wk.week_number < st.sw) continue;
+      for (var j = 0; j < wk.days.length; j++) {
+        var dn = wk.days[j].day_number;
+        if (!st.d[key(wk.week_number, dn)]) return { type: 'workout', week: wk.week_number, day: dn };
+      }
+      if (wk.benchmark_test_after_week && !st.T[wk.week_number]) {
+        return { type: 'test', week: wk.week_number };
+      }
+    }
+    return { type: 'finished' };
+  }
+
+  function totalWorkouts(P, st) {
+    var n = 0;
+    P.weeks.forEach(function (wk) { if (wk.week_number >= st.sw) n += wk.days.length; });
+    return n;
+  }
+
+  function doneWorkouts(P, st) {
+    var n = 0;
+    Object.keys(st.d).forEach(function (k) { if (parseInt(k, 10) >= st.sw) n++; });
+    return n;
+  }
+
+  function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
+
+  function completeWorkout(P, st, w, d, reps, now) {
+    var wo = getWorkout(P, st, w, d);
+    st.d[key(w, d)] = { t: now, k: tierNum(wo.tier), r: reps.slice() };
+    st.a = null;
+    st.u = now;
+    return st.d[key(w, d)];
+  }
+
+  function transitionsFor(P, w) {
+    var wk = weekDef(P, w);
+    return (wk && wk.benchmark_test_after_week && wk.benchmark_test_after_week.transitions) || null;
+  }
+
+  function finalTarget(P, w) {
+    var wk = weekDef(P, w);
+    var b = wk && wk.benchmark_test_after_week;
+    return b && b.target_reps != null ? b.target_reps : null;
+  }
+
+  function applyTest(P, st, w, reps, now) {
+    var tr = transitionsFor(P, w);
+    var rec = { r: reps, t: now };
+    if (tr) {
+      for (var i = 0; i < tr.length; i++) {
+        var x = tr[i];
+        if (reps >= x.min_reps && (x.max_reps == null || reps <= x.max_reps)) { rec.n = x.next_tier; break; }
+      }
+    } else {
+      st.f = true; // финальный тест
+    }
+    st.T[w] = rec;
+    st.u = now;
+    return rec;
+  }
+
+  function skipTest(P, st, w, now) {
+    st.T[w] = { x: 1, n: tierAtWeek(P, st, w + 1), t: now };
+    st.u = now;
+  }
+
+  // Повтор недели: тренировки уходят в архив (их повторения остаются в общей сумме)
+  function resetWeek(P, st, w, now) {
+    var wk = weekDef(P, w);
+    wk.days.forEach(function (day) {
+      var k = key(w, day.day_number);
+      var rec = st.d[k];
+      if (rec) {
+        st.ar.r += sum(rec.r);
+        st.ar.w += 1;
+        delete st.d[k];
+      }
+    });
+    if (finalTarget(P, w) != null) { delete st.T[w]; st.f = false; }
+    if (st.a && st.a.k && parseInt(st.a.k, 10) === w) st.a = null;
+    st.u = now;
+  }
+
+  function totalReps(st) {
+    var n = st.ar.r;
+    Object.keys(st.d).forEach(function (k) { n += sum(st.d[k].r); });
+    return n;
+  }
+
+  function lastWorkoutTime(st) {
+    var t = 0;
+    Object.keys(st.d).forEach(function (k) { if (st.d[k].t > t) t = st.d[k].t; });
+    return t;
+  }
+
+  function plannedFor(P, st, w, d, rec) {
+    return getWorkout(P, st, w, d, 'tier_' + rec.k).sets;
+  }
+
+  function shortfalls(planned, reps) {
+    var n = 0;
+    for (var i = 0; i < planned.length; i++) if ((reps[i] || 0) < planned[i]) n++;
+    return n;
+  }
+
+  // Лучший результат: стартовый максимум и все контрольные тесты
+  function bestMax(st) {
+    var b = st.m;
+    Object.keys(st.T).forEach(function (w) { if (st.T[w].r != null && st.T[w].r > b) b = st.T[w].r; });
+    return b;
+  }
+
+  var L = {
+    DAYS_PER_WEEK: DAYS_PER_WEEK,
+    tierNum: tierNum, tierRange: tierRange, findTier: findTier, weekDef: weekDef,
+    newState: newState, tierAtWeek: tierAtWeek, getWorkout: getWorkout, key: key,
+    nextAction: nextAction, totalWorkouts: totalWorkouts, doneWorkouts: doneWorkouts,
+    completeWorkout: completeWorkout, transitionsFor: transitionsFor, finalTarget: finalTarget,
+    applyTest: applyTest, skipTest: skipTest, resetWeek: resetWeek, totalReps: totalReps,
+    lastWorkoutTime: lastWorkoutTime, plannedFor: plannedFor, shortfalls: shortfalls,
+    bestMax: bestMax, sum: sum
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = L;
+  else root.Logic = L;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+  'use strict';
+
+  const L = window.Logic;
+  const tg = (window.Telegram && window.Telegram.WebApp) || null;
+  const insideTelegram = !!(tg && tg.BackButton && tg.platform && tg.platform !== 'unknown');
+  const app = document.getElementById('app');
+
+  const ORDER = ['pushups_100', 'pullups_50', 'situps_200', 'squats_200'];
+  const META = {
+    pushups_100: { name: 'Отжимания', goalText: '100 отжиманий подряд', defaultMax: 10 },
+    pullups_50: { name: 'Подтягивания', goalText: '50 подтягиваний подряд', defaultMax: 4 },
+    situps_200: { name: 'Пресс', goalText: '200 скручиваний подряд', defaultMax: 15 },
+    squats_200: { name: 'Приседания', goalText: '200 приседаний подряд', defaultMax: 20 }
+  };
+  const icon = (id) => `<img src="${ICONS[id]}" alt="">`;
+  const STATS_SVG = `<svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs><radialGradient id="sgr" cx="50%" cy="0%" r="100%"><stop offset="0" stop-color="#3c3c3c"/><stop offset="1" stop-color="#050505"/></radialGradient></defs>
+    <rect width="96" height="96" rx="23" fill="url(#sgr)"/>
+    <rect x="20" y="58" width="14" height="20" rx="3" fill="#ffcc00"/>
+    <rect x="41" y="45" width="14" height="33" rx="3" fill="#ffcc00"/>
+    <rect x="62" y="32" width="14" height="46" rx="3" fill="#ffcc00"/>
+    <path d="M20 44 L38 31 L50 37 L72 18" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M62 17 H73 V28" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const RING = 2 * Math.PI * 45;
+
+  const ST = {};            // programId -> состояние или null
+  let stack = [{ v: 'home' }];
+  let ticker = null;
+  let curReps = 0, curRepsKey = '';
+
+  /* ---------- утилиты ---------- */
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const sum = L.sum;
+  const mmss = (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  const dateStr = (ts) => new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
+  const fmtSets = (sets, amrap) => sets.map((n, i) => (amrap && i === sets.length - 1 ? n + '+' : n)).join(' · ');
+  const tn = L.tierNum;
+
+  function haptic(kind, style) {
+    try {
+      if (!tg || !tg.HapticFeedback) return;
+      if (kind === 'n') tg.HapticFeedback.notificationOccurred(style || 'success');
+      else tg.HapticFeedback.impactOccurred(style || 'light');
+    } catch (e) { /* нет поддержки */ }
+  }
+
+  // Свой диалог: системные confirm/alert блокируются в некоторых WebView и превью,
+  // из-за этого «Повторить неделю» могло молча не срабатывать.
+  function sheet(msg, buttons) {
+    const old = document.querySelector('.sheet-bg');
+    if (old) old.remove();
+    const bg = document.createElement('div');
+    bg.className = 'sheet-bg';
+    bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><p>${esc(msg)}</p>` +
+      buttons.map((b, i) => `<button class="btn ${b.cls || ''}" data-i="${i}">${esc(b.label)}</button>`).join('') + '</div>';
+    const close = () => bg.remove();
+    bg.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-i]');
+      if (btn) { close(); const f = buttons[+btn.dataset.i].fn; if (f) f(); return; }
+      if (e.target === bg) close();
+    });
+    document.body.appendChild(bg);
+    haptic('i', 'light');
+  }
+
+  function notify(msg) { sheet(msg, [{ label: 'Понятно' }]); }
+
+  function confirmBox(msg, ok, okLabel, danger) {
+    sheet(msg, [
+      { label: okLabel || 'Да', fn: ok, cls: danger ? 'danger-solid' : '' },
+      { label: 'Отмена', cls: 'sec' }
+    ]);
+  }
+
+  /* ---------- звук и экран ---------- */
+  let actx = null;
+  function unlockAudio() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended') actx.resume();
+    } catch (e) { /* ignore */ }
+  }
+  function beep(times) {
+    try {
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    } catch (e) { /* ignore */ }
+    if (!actx) return;
+    try {
+      const t0 = actx.currentTime;
+      for (let i = 0; i < (times || 3); i++) {
+        const o = actx.createOscillator();
+        const g = actx.createGain();
+        const s = t0 + i * 0.24;
+        o.type = 'sine';
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.0001, s);
+        g.gain.exponentialRampToValueAtTime(0.35, s + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, s + 0.18);
+        o.connect(g); g.connect(actx.destination);
+        o.start(s); o.stop(s + 0.2);
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  let wl = null;
+  function lockScreen() {
+    try {
+      if (navigator.wakeLock && !wl) {
+        navigator.wakeLock.request('screen').then((s) => {
+          wl = s;
+          s.addEventListener('release', () => { wl = null; });
+        }).catch(() => {});
+      }
+    } catch (e) { /* ignore */ }
+  }
+  function unlockScreen() {
+    try { if (wl) { wl.release(); wl = null; } } catch (e) { /* ignore */ }
+  }
+
+  /* ---------- хранилище: CloudStorage Telegram + localStorage ---------- */
+  const LS = 'tw6_';
+  const lsGet = (k) => { try { return localStorage.getItem(LS + k); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(LS + k, v); } catch (e) { /* ignore */ } };
+  const lsDel = (k) => { try { localStorage.removeItem(LS + k); } catch (e) { /* ignore */ } };
+  const cloudOK = () => !!(tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'));
+  const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch (e) { return null; } };
+
+  function cloudGet(k) {
+    return new Promise((resolve) => {
+      if (!cloudOK()) return resolve(null);
+      let done = false;
+      const to = setTimeout(() => { if (!done) { done = true; resolve(null); } }, 2500);
+      try {
+        tg.CloudStorage.getItem(k, (err, val) => {
+          if (done) return;
+          done = true; clearTimeout(to);
+          resolve(!err && val ? val : null);
+        });
+      } catch (e) { done = true; clearTimeout(to); resolve(null); }
+    });
+  }
+  function cloudSet(k, v) { if (cloudOK()) { try { tg.CloudStorage.setItem(k, v, () => {}); } catch (e) { /* ignore */ } } }
+  function cloudDel(k) { if (cloudOK()) { try { tg.CloudStorage.removeItem(k, () => {}); } catch (e) { /* ignore */ } } }
+
+  function loadAll() {
+    return Promise.all(ORDER.map((id) => cloudGet(id).then((c) => {
+      const a = parse(c), b = parse(lsGet(id));
+      ST[id] = a && b ? (a.u >= b.u ? a : b) : (a || b || null);
+    })));
+  }
+
+  function persist(id) {
+    const st = ST[id];
+    if (!st) { lsDel(id); cloudDel(id); return; }
+    st.u = Date.now();
+    const s = JSON.stringify(st);
+    lsSet(id, s);
+    if (s.length < 4000) cloudSet(id, s); // лимит значения CloudStorage — 4096 символов
+  }
+
+  /* ---------- навигация ---------- */
+  const cur = () => stack[stack.length - 1];
+  function go(v, p) { stack.push(Object.assign({ v }, p || {})); render(); }
+  function replace(v, p) { stack[stack.length - 1] = Object.assign({ v }, p || {}); render(); }
+  function resetTo(arr) { stack = arr; render(); }
+  function back() { if (stack.length > 1) { stack.pop(); render(); } }
+
+  function backLink() {
+    if (insideTelegram || stack.length < 2) return '';
+    return '<button class="btn ghost small" data-act="back" style="padding-left:0">‹ Назад</button>';
+  }
+
+  /* ---------- общие куски разметки ---------- */
+  function stepperInput(id, val) {
+    return `<div class="stepper">
+      <button data-act="step" data-t="${id}" data-d="-1" aria-label="Минус">−</button>
+      <input id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="999" value="${val}">
+      <button data-act="step" data-t="${id}" data-d="1" aria-label="Плюс">+</button>
+    </div>`;
+  }
+
+  function bottom(html) { return `<div class="bottom"><div>${html}</div></div>`; }
+
+  function testNumber(P, w) {
+    let n = 0;
+    for (const wk of P.weeks) {
+      const b = wk.benchmark_test_after_week;
+      if (b && b.target_reps == null) n++;
+      if (wk.week_number === w) return n;
+    }
+    return n;
+  }
+
+  function levelRange(r) {
+    return r.max_reps == null ? r.min_reps + '+' : r.min_reps + '–' + r.max_reps;
+  }
+
+  /* ---------- экраны ---------- */
+  const VIEWS = {};
+  const AFTER = {};
+
+  VIEWS.home = function () {
+    let h = `<h1>Выберите программу</h1>
+      <p class="hint">6 недель, 3 тренировки в неделю.</p><div class="mt"></div>`;
+    ORDER.forEach((id) => {
+      const P = DATA[id], m = META[id], st = ST[id];
+      let sub = `Цель: ${m.goalText} · 6 недель`, bar = '';
+      if (st) {
+        const done = L.doneWorkouts(P, st), total = L.totalWorkouts(P, st);
+        if (st.f) {
+          const fin = st.T[6];
+          sub = `<span class="badge ok">Завершено</span> финальный тест: ${fin ? fin.r : '—'}`;
+        } else {
+          const a = L.nextAction(P, st);
+          const where = a.type === 'workout' ? `Неделя ${a.week} · День ${a.day}` : `Контрольный тест`;
+          sub = `Дальше: ${where}`;
+        }
+        bar = `<div class="bar-track"><div class="bar-fill" style="width:${Math.round(done / total * 100)}%"></div></div>
+               <div class="hint small" style="margin-top:4px">Тренировок: ${done} из ${total}</div>`;
+      }
+      h += `<div class="card tap prog" data-act="open" data-id="${id}">
+        <div class="ico">${icon(id)}</div>
+        <div class="grow"><h3>${m.name}</h3><div class="hint small">${sub}</div>${bar}</div>
+        <div class="chev">›</div></div>`;
+    });
+    h += `<p class="hint small center" style="margin-top:20px">Прогресс хранится в вашем Telegram-аккаунте и доступен на всех устройствах.</p>`;
+    return h;
+  };
+
+  VIEWS.setup = function (c) {
+    const m = META[c.id];
+    return `${backLink()}
+      <div class="row" style="margin-bottom:8px"><div class="ico lg">${icon(c.id)}</div><h1 class="grow">${m.name}</h1></div>
+      <p class="hint">Цель: ${m.goalText}</p>
+      <div class="card center">
+        <h3>Стартовый тест</h3>
+        <p class="hint small" style="margin:6px 0 0">Разомнитесь и сделайте максимум повторений в одном подходе до отказа — чисто, без рывков. Введите результат.</p>
+        ${stepperInput('num', m.defaultMax)}
+        <div id="tierPrev" style="margin-top:12px"></div>
+      </div>
+      ${bottom('<button class="btn" data-act="start">Начать программу</button>')}`;
+  };
+  AFTER.setup = updateTierPrev;
+
+  function updateTierPrev() {
+    const c = cur();
+    const el = document.getElementById('tierPrev');
+    const inp = document.getElementById('num');
+    if (!el || !inp) return;
+    const P = DATA[c.id];
+    const n = Math.max(0, parseInt(inp.value, 10) || 0);
+    const t = L.findTier(P, n);
+    const lvl = tn(t.target_tier_on_start || t.tier_id);
+    let html;
+    if (t.start_week > 1) {
+      html = `Ваш результат выше стартовых уровней. Начнём сразу с <b>недели ${t.start_week}</b>, уровень <b>${lvl}</b>.`;
+    } else {
+      html = `Ваш уровень: <b>${lvl}</b> <span class="hint">(тест ${L.tierRange(t)})</span>`;
+    }
+    if (t.note) html += `<p class="hint small" style="margin-top:8px">${esc(t.note)}</p>`;
+    el.innerHTML = html;
+  }
+
+  VIEWS.program = function (c) {
+    const id = c.id, P = DATA[id], m = META[id], st = ST[id];
+    const act = L.nextAction(P, st);
+    const done = L.doneWorkouts(P, st), total = L.totalWorkouts(P, st);
+    let h = `${backLink()}
+      <div class="row"><div class="ico lg">${icon(id)}</div>
+      <div class="grow"><h1>${m.name}</h1><div class="hint small">Цель: ${m.goalText}</div></div></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(done / total * 100)}%"></div></div>
+      <div class="hint small" style="margin:4px 0 16px">Тренировок: ${done} из ${total}</div>`;
+
+    const last = L.lastWorkoutTime(st);
+    if (act.type !== 'finished' && last && sameDay(last, Date.now())) {
+      h += `<div class="banner">Сегодня вы уже тренировались. Между тренировками нужен хотя бы день отдыха.</div>`;
+    }
+
+    let cta = '';
+    if (act.type === 'workout') {
+      const wo = L.getWorkout(P, st, act.week, act.day);
+      const resume = st.a && st.a.k === L.key(act.week, act.day) && st.a.i > 0;
+      h += `<div class="card">
+        <div class="hint small">${resume ? 'Тренировка в процессе' : 'Следующая тренировка'}</div>
+        <h3 style="margin:2px 0 8px">Неделя ${act.week} · День ${act.day}</h3>
+        <div style="font-size:22px;font-weight:700">${fmtSets(wo.sets, wo.amrapLast)}</div>
+        <div class="hint small" style="margin-top:6px">Всего от ${sum(wo.sets)} повторений · отдых ${wo.rest[0]} с</div>
+      </div>`;
+      cta = `<button class="btn" data-act="start-workout" data-w="${act.week}" data-d="${act.day}">${resume ? 'Продолжить тренировку' : 'Начать тренировку'}</button>`;
+    } else if (act.type === 'test') {
+      const fin = L.finalTarget(P, act.week);
+      h += `<div class="card"><div class="hint small">Следующий шаг</div>
+        <h3 style="margin:2px 0 6px">${fin != null ? 'Финальный тест' : 'Контрольный тест ' + testNumber(P, act.week)}</h3>
+        <div class="hint">${fin != null ? 'Один подход до абсолютного отказа. Цель — ' + fin + '.' : 'Один подход до отказа. Результат определит уровень следующих недель.'}</div></div>`;
+      cta = `<button class="btn" data-act="open-test" data-w="${act.week}">Пройти тест</button>`;
+    } else {
+      const fin = st.T[6];
+      const goal = L.finalTarget(P, 6);
+      h += `<div class="card center"><div class="big-emoji">${fin && fin.r >= goal ? '🏆' : '🏁'}</div>
+        <h3>Программа завершена</h3>
+        <p class="hint" style="margin:6px 0 0">Финальный результат: <b>${fin ? fin.r : '—'}</b> из ${goal}</p></div>`;
+    }
+
+    h += `<h2>План</h2><p class="hint small" style="margin:-4px 0 10px">Уровень — это нагрузка подходов. Он выбирается по стартовому тесту и обновляется после контрольных тестов.</p>`;
+
+    const pendingFrom = (w) => P.weeks.some((x) => x.benchmark_test_after_week && x.week_number >= st.sw && x.week_number < w && !st.T[x.week_number]);
+
+    P.weeks.forEach((wk) => {
+      const w = wk.week_number;
+      const skipped = w < st.sw;
+      const tier = L.tierAtWeek(P, st, w);
+      const prelim = !skipped && pendingFrom(w);
+      let anyDone = false;
+      let body = '';
+      if (skipped) {
+        body = `<div class="hint small">Пропущена: вы начинаете сразу с недели ${st.sw}.</div>`;
+      } else {
+        wk.days.forEach((day) => {
+          const dn = day.day_number, k = L.key(w, dn), rec = st.d[k];
+          const isNext = act.type === 'workout' && act.week === w && act.day === dn;
+          if (rec) {
+            anyDone = true;
+            const planned = L.plannedFor(P, st, w, dn, rec);
+            const wo = L.getWorkout(P, st, w, dn, 'tier_' + rec.k);
+            body += `<div class="day done"><div class="dot">✓</div><div class="grow">
+              <div><span class="hint">День ${dn}</span> <span class="sets">${fmtSets(planned, wo.amrapLast)}</span></div>
+              <div class="hint small">сделано: ${rec.r.join(' · ')} = ${sum(rec.r)} · ${dateStr(rec.t)}</div></div></div>`;
+          } else {
+            const wo = L.getWorkout(P, st, w, dn);
+            body += `<div class="day ${isNext ? 'next' : ''}"><div class="dot">${dn}</div><div class="grow">
+              <span class="hint">День ${dn}</span> <span class="sets">${fmtSets(wo.sets, wo.amrapLast)}</span></div></div>`;
+          }
+        });
+        const bm = wk.benchmark_test_after_week;
+        if (bm) {
+          const res = st.T[w];
+          const fin = bm.target_reps != null;
+          const isNextTest = act.type === 'test' && act.week === w;
+          let txt;
+          if (res && res.x) txt = `пропущен · уровень ${tn(res.n)}`;
+          else if (res) txt = `${res.r} повт.${res.n ? ' → уровень ' + tn(res.n) : ''}`;
+          else txt = fin ? `цель — ${bm.target_reps}` : 'после этой недели';
+          body += `<div class="day ${res ? 'done' : (isNextTest ? 'next' : '')}"><div class="dot">${res ? '✓' : '★'}</div>
+            <div class="grow"><b>${fin ? 'Финальный тест' : 'Контрольный тест ' + testNumber(P, w)}</b>
+            <div class="hint small">${txt}</div></div>
+            ${res && !fin ? `<button class="btn ghost small" data-act="open-test" data-w="${w}">Пересдать</button>` : ''}</div>`;
+        }
+        if (anyDone) body += `<div style="padding-top:6px"><button class="btn ghost small" data-act="repeat" data-w="${w}" style="padding-left:0">↺ Повторить неделю</button></div>`;
+      }
+      h += `<div class="card ${skipped ? 'dim' : ''}">
+        <div class="week-head"><h3>Неделя ${w}</h3>
+        ${skipped ? '<span class="badge mute">пропущена</span>' : `<span class="badge">Уровень ${tn(tier)}${prelim ? ' · предв.' : ''}</span>`}</div>${body}</div>`;
+    });
+
+    h += `<div style="display:grid;gap:8px;margin-top:8px">
+      <button class="btn sec" data-act="stats"><span class="ico-inline" style="display:inline-block">${STATS_SVG}</span>Статистика</button>
+      <button class="btn danger" data-act="restart">Начать заново</button></div>`;
+    if (cta) h += bottom(cta);
+    return h;
+  };
+
+  /* --- тренировка --- */
+  function chipsHtml(wo, a) {
+    return '<div class="chips full">' + wo.sets.map((n, j) => {
+      const last = j === wo.sets.length - 1;
+      if (j < a.i) return `<span class="chip ${a.r[j] < n ? 'low' : 'done'}">${a.r[j]}</span>`;
+      const label = n + (last && wo.amrapLast ? '+' : '');
+      return `<span class="chip ${j === a.i ? 'cur' : ''}">${label}</span>`;
+    }).join('') + '</div>';
+  }
+
+  function ensureActive(st, id, w, d) {
+    const k = L.key(w, d);
+    if (!st.a || st.a.k !== k) {
+      st.a = { k, i: 0, r: [], e: null, tot: 0 };
+      persist(id);
+    }
+    return st.a;
+  }
+
+  VIEWS.workout = function (c) {
+    const id = c.id, P = DATA[id], m = META[id], st = ST[id];
+    const wo = L.getWorkout(P, st, c.w, c.d);
+    const a = ensureActive(st, id, c.w, c.d);
+    if (a.e && a.e <= Date.now()) { a.e = null; persist(id); }
+    const n = wo.sets.length;
+    const head = `${backLink()}<div class="hint small">${m.name} · Неделя ${c.w} · День ${c.d}</div>${chipsHtml(wo, a)}`;
+
+    if (a.e) {
+      const nextLast = a.i === n - 1;
+      return `${head}
+        <div class="center">
+          <div class="hint">Отдых</div>
+          <div class="ring-wrap">
+            <svg viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="45" fill="none" stroke-width="6"/>
+            <circle class="ring-fg" id="ringfg" cx="50" cy="50" r="45" fill="none" stroke-width="6" stroke-linecap="round"
+              stroke-dasharray="${RING}" stroke-dashoffset="0"/></svg>
+            <div class="ring-text"><div class="t" id="tm">0:00</div><div class="hint small">осталось</div></div>
+          </div>
+          <div class="adj">
+            <button class="btn sec" data-act="rest-adj" data-d="-15">− 15 с</button>
+            <button class="btn sec" data-act="rest-adj" data-d="15">+ 15 с</button>
+          </div>
+          <div class="card mt"><div class="hint small">Следующий подход ${a.i + 1} из ${n}</div>
+            <div style="font-size:44px;font-weight:800;line-height:1.1">${wo.sets[a.i]}${nextLast && wo.amrapLast ? '+' : ''}</div></div>
+        </div>
+        ${bottom('<button class="btn" data-act="rest-skip">Начать следующий подход</button>')}`;
+    }
+
+    const planned = wo.sets[a.i];
+    const last = a.i === n - 1;
+    const key = a.k + ':' + a.i;
+    if (curRepsKey !== key) { curReps = planned; curRepsKey = key; }
+    return `${head}
+      <div class="card center">
+        <div class="hint">Подход ${a.i + 1} из ${n}</div>
+        <div class="target">${planned}${last && wo.amrapLast ? '+' : ''}</div>
+        <div class="hint">${last && wo.amrapLast ? 'минимум — в последнем делайте до отказа' : 'повторений по плану'}</div>
+      </div>
+      <div class="card center">
+        <div class="counter-label">Сколько получилось</div>
+        <div class="stepper" style="margin-top:6px">
+          <button data-act="rep" data-d="-1" aria-label="Минус">−</button>
+          <div class="val" id="reps">${curReps}</div>
+          <button data-act="rep" data-d="1" aria-label="Плюс">+</button>
+        </div>
+      </div>
+      ${a.i > 0 ? '<button class="btn ghost small" data-act="undo">↶ Отменить прошлый подход</button>' : ''}
+      ${bottom('<button class="btn" data-act="set-done">Подход выполнен</button>')}`;
+  };
+  AFTER.workout = function () {
+    const c = cur(), st = ST[c.id];
+    if (st && st.a && st.a.e) startTicker(c.id);
+  };
+
+  function stopTicker() { if (ticker) { clearInterval(ticker); ticker = null; } }
+  function startTicker(id) {
+    stopTicker();
+    let lastSec = -1;
+    const tm = document.getElementById('tm'), ring = document.getElementById('ringfg');
+    function tick() {
+      const st = ST[id], a = st && st.a;
+      if (!a || !a.e || cur().v !== 'workout') return stopTicker();
+      const left = a.e - Date.now();
+      const secs = Math.max(0, Math.ceil(left / 1000));
+      if (tm) tm.textContent = mmss(secs);
+      const frac = Math.min(1, Math.max(0, left / (a.tot * 1000)));
+      if (ring) ring.style.strokeDashoffset = String(RING * (1 - frac));
+      if (secs > 0 && secs <= 3 && secs !== lastSec) haptic('i', 'light');
+      lastSec = secs;
+      if (left <= 0) {
+        stopTicker();
+        a.e = null;
+        persist(id);
+        beep(3);
+        haptic('n', 'success');
+        render();
+      }
+    }
+    tick();
+    ticker = setInterval(tick, 250);
+  }
+
+  VIEWS.summary = function (c) {
+    const id = c.id, P = DATA[id], st = ST[id];
+    const rec = st.d[L.key(c.w, c.d)];
+    const wo = L.getWorkout(P, st, c.w, c.d, 'tier_' + rec.k);
+    const total = sum(rec.r), plan = sum(wo.sets), sf = L.shortfalls(wo.sets, rec.r);
+    const chips = '<div class="chips" style="justify-content:center">' + wo.sets.map((p, j) =>
+      `<span class="chip ${rec.r[j] < p ? 'low' : 'done'}">${rec.r[j]}</span>`).join('') + '</div>';
+    const act = L.nextAction(P, st);
+    let next;
+    if (act.type === 'workout') next = `Следующая: неделя ${act.week}, день ${act.day}.`;
+    else if (act.type === 'test') next = 'Дальше — ' + (L.finalTarget(P, act.week) != null ? 'финальный' : 'контрольный') + ' тест.';
+    else next = 'Программа завершена.';
+    const msg = sf === 0
+      ? 'Все подходы выполнены по плану. Отличная работа!'
+      : `Подходов ниже плана: ${sf}. Если программа даётся тяжело, повторите эту неделю — кнопка есть в плане.`;
+    return `<div class="big-emoji">${sf === 0 ? '🔥' : '✅'}</div>
+      <h1 class="center">Тренировка завершена</h1>
+      <p class="hint center">Неделя ${c.w} · День ${c.d}</p>
+      <div class="tiles"><div class="tile"><div class="n">${total}</div><div class="hint small">повторений</div></div>
+      <div class="tile"><div class="n">${plan}+</div><div class="hint small">по плану</div></div></div>
+      <div class="card center">${chips}<p style="margin:8px 0 0">${msg}</p></div>
+      <p class="hint center">${next} Отдохните хотя бы день.</p>
+      ${bottom('<button class="btn" data-act="back">Готово</button>')}`;
+  };
+
+  /* --- контрольный тест --- */
+  VIEWS.test = function (c) {
+    const id = c.id, P = DATA[id], m = META[id], st = ST[id], w = c.w;
+    const wk = L.weekDef(P, w);
+    const bm = wk.benchmark_test_after_week;
+    const fin = bm.target_reps != null;
+    const res = st.T[w];
+    const title = fin ? '🏁 Финальный тест' : `Контрольный тест ${testNumber(P, w)}`;
+
+    if (c.res && res) {
+      if (fin) {
+        const ok = res.r >= bm.target_reps;
+        return `<div class="big-emoji">${ok ? '🏆' : '💪'}</div>
+          <h1 class="center">Результат: ${res.r}</h1>
+          <div class="bar-track" style="height:10px"><div class="bar-fill" style="width:${Math.min(100, Math.round(res.r / bm.target_reps * 100))}%"></div></div>
+          <p class="center" style="margin-top:12px">${ok ? `Цель ${bm.target_reps} достигнута. Поздравляем!` : `До цели ${bm.target_reps} осталось ${bm.target_reps - res.r}. Можно повторить 6-ю неделю и пересдать тест.`}</p>
+          ${bottom('<button class="btn" data-act="back">К программе</button>')}`;
+      }
+      const prev = res.x ? '' : (res.r > st.m ? `<p class="hint center">Старт был ${st.m} — прогресс +${res.r - st.m}</p>` : '');
+      return `<div class="big-emoji">✅</div>
+        <h1 class="center">Результат: ${res.r}</h1>${prev}
+        <div class="card center"><div class="hint small">Следующие недели</div>
+        <div style="font-size:28px;font-weight:800">Уровень ${tn(res.n)}</div></div>
+        ${bottom('<button class="btn" data-act="back">К программе</button>')}`;
+    }
+
+    const lastRes = res && res.r != null ? res.r : (L.bestMax(st) || m.defaultMax);
+    let table = '';
+    if (!fin) {
+      const tr = L.transitionsFor(P, w);
+      table = `<div class="card"><h3 style="margin-bottom:6px">Как выбирается уровень</h3>` +
+        tr.map((x) => `<div class="logrow"><span>${levelRange(x)} повт.</span><b>уровень ${tn(x.next_tier)}</b></div>`).join('') + '</div>';
+    }
+    return `${backLink()}<h1>${title}</h1>
+      <p class="hint">${fin
+        ? `Отдохните 48–72 часа после последней тренировки, затем сделайте один подход до абсолютного отказа. Цель — ${bm.target_reps}.`
+        : 'Отдохните 24–48 часов после последней тренировки, затем сделайте один подход до отказа — чисто, без рывков.'}</p>
+      <div class="card center"><h3>Ваш результат</h3>${stepperInput('num', lastRes)}</div>
+      ${table}
+      ${bottom(`<button class="btn" data-act="test-save" data-w="${w}">Сохранить результат</button>` +
+        (fin ? '' : `<button class="btn ghost" data-act="test-skip" data-w="${w}">Пропустить тест</button>`))}`;
+  };
+
+  /* --- статистика --- */
+  function chartSvg(P, st) {
+    const goal = L.finalTarget(P, 6);
+    const pts = [{ l: 'Старт', v: st.m }];
+    P.weeks.forEach((wk) => {
+      const b = wk.benchmark_test_after_week, r = st.T[wk.week_number];
+      if (b && r && r.r != null) pts.push({ l: b.target_reps != null ? 'Финал' : 'Т' + testNumber(P, wk.week_number), v: r.r });
+    });
+    const W = 320, H = 180, top = 26, base = 150;
+    const max = Math.max(goal, ...pts.map((p) => p.v));
+    const y = (v) => base - (v / max) * (base - top);
+    const slot = (W - 16) / pts.length, bw = Math.min(46, slot * 0.62);
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Максимум повторений по тестам">`;
+    s += `<line class="goal" x1="8" x2="${W - 8}" y1="${y(goal)}" y2="${y(goal)}"/><text class="goal-t" x="${W - 8}" y="${y(goal) - 5}" text-anchor="end">цель ${goal}</text>`;
+    pts.forEach((p, i) => {
+      const x = 8 + slot * i + (slot - bw) / 2, yy = y(p.v);
+      s += `<rect class="bar" x="${x}" y="${yy}" width="${bw}" height="${base - yy}" rx="6"/>
+        <text class="v" x="${x + bw / 2}" y="${yy - 5}" text-anchor="middle">${p.v}</text>
+        <text x="${x + bw / 2}" y="${base + 16}" text-anchor="middle">${p.l}</text>`;
+    });
+    return s + '</svg>';
+  }
+
+  VIEWS.stats = function (c) {
+    const id = c.id, P = DATA[id], st = ST[id];
+    const done = L.doneWorkouts(P, st), total = L.totalWorkouts(P, st);
+    const days = Math.floor((Date.now() - st.s0) / 864e5) + 1;
+    const entries = Object.keys(st.d).map((k) => {
+      const [w, d] = k.split('-').map(Number);
+      return { w, d, rec: st.d[k] };
+    }).sort((a, b) => b.rec.t - a.rec.t);
+    const log = entries.length ? entries.map((e) => {
+      const plan = sum(L.plannedFor(P, st, e.w, e.d, e.rec));
+      return `<div class="logrow"><span>Нед. ${e.w} · День ${e.d} <span class="hint small">${dateStr(e.rec.t)}</span></span><span><b>${sum(e.rec.r)}</b> <span class="hint small">/ ${plan}+</span></span></div>`;
+    }).join('') : '<p class="hint">Пока нет выполненных тренировок.</p>';
+    return `${backLink()}<div class="row" style="margin-bottom:4px"><div class="ico lg">${STATS_SVG}</div><div class="grow"><div class="hint small">Статистика</div><h1>${META[id].name}</h1></div></div>
+      <div class="tiles" style="margin-top:12px">
+        <div class="tile"><div class="n">${done}/${total}</div><div class="hint small">тренировок</div></div>
+        <div class="tile"><div class="n">${L.totalReps(st)}</div><div class="hint small">повторений всего</div></div>
+        <div class="tile"><div class="n">${L.bestMax(st)}</div><div class="hint small">лучший максимум</div></div>
+        <div class="tile"><div class="n">${days}</div><div class="hint small">день с начала</div></div>
+      </div>
+      <div class="card"><h3 style="margin-bottom:6px">Максимум за подход</h3>${chartSvg(P, st)}</div>
+      <h2>Журнал</h2><div class="card">${log}</div>`;
+  };
+
+  /* ---------- отрисовка ---------- */
+  function render() {
+    stopTicker();
+    const c = cur();
+    app.innerHTML = '<div class="fade">' + VIEWS[c.v](c) + '</div>';
+    window.scrollTo(0, 0);
+    if (tg && tg.BackButton) {
+      try { if (stack.length > 1) tg.BackButton.show(); else tg.BackButton.hide(); } catch (e) { /* ignore */ }
+    }
+    if (c.v === 'workout') lockScreen(); else unlockScreen();
+    if (AFTER[c.v]) AFTER[c.v](c);
+  }
+
+  /* ---------- действия ---------- */
+  const readNum = () => {
+    const el = document.getElementById('num');
+    const n = el ? parseInt(el.value, 10) : NaN;
+    return isNaN(n) ? null : Math.max(0, Math.min(999, n));
+  };
+
+  const ACTIONS = {
+    back: () => back(),
+
+    open: (d) => {
+      if (!ST[d.id]) go('setup', { id: d.id }); else go('program', { id: d.id });
+    },
+
+    step: (d) => {
+      const el = document.getElementById(d.t);
+      if (!el) return;
+      el.value = Math.max(0, Math.min(999, (parseInt(el.value, 10) || 0) + parseInt(d.d, 10)));
+      haptic('i', 'light');
+      if (cur().v === 'setup') updateTierPrev();
+    },
+
+    start: () => {
+      const id = cur().id, n = readNum();
+      if (n === null) return notify('Введите число повторений.');
+      ST[id] = L.newState(DATA[id], n, Date.now());
+      persist(id);
+      haptic('n', 'success');
+      resetTo([{ v: 'home' }, { v: 'program', id }]);
+    },
+
+    stats: () => go('stats', { id: cur().id }),
+
+    'start-workout': (d) => {
+      unlockAudio();
+      go('workout', { id: cur().id, w: +d.w, d: +d.d });
+    },
+
+    rep: (d) => {
+      curReps = Math.max(0, Math.min(999, curReps + parseInt(d.d, 10)));
+      const el = document.getElementById('reps');
+      if (el) el.textContent = curReps;
+      haptic('i', 'light');
+    },
+
+    'set-done': () => {
+      unlockAudio();
+      const c = cur(), id = c.id, P = DATA[id], st = ST[id];
+      const wo = L.getWorkout(P, st, c.w, c.d), a = st.a;
+      a.r.push(curReps);
+      a.i += 1;
+      haptic('i', 'medium');
+      if (a.i >= wo.sets.length) {
+        L.completeWorkout(P, st, c.w, c.d, a.r, Date.now());
+        persist(id);
+        haptic('n', 'success');
+        return replace('summary', { id, w: c.w, d: c.d });
+      }
+      const secs = wo.rest[a.i - 1] != null ? wo.rest[a.i - 1] : 60;
+      a.e = Date.now() + secs * 1000;
+      a.tot = secs;
+      persist(id);
+      render();
+    },
+
+    undo: () => {
+      const c = cur(), st = ST[c.id], a = st.a;
+      if (!a || a.i === 0) return;
+      a.i -= 1; a.r.pop(); a.e = null;
+      curRepsKey = '';
+      persist(c.id);
+      render();
+    },
+
+    'rest-adj': (d) => {
+      const c = cur(), st = ST[c.id], a = st.a;
+      if (!a || !a.e) return;
+      const delta = parseInt(d.d, 10);
+      a.e = Math.max(Date.now() + 1000, a.e + delta * 1000);
+      a.tot = Math.max(5, a.tot + delta);
+      haptic('i', 'light');
+      persist(c.id);
+      startTicker(c.id);
+    },
+
+    'rest-skip': () => {
+      const c = cur(), st = ST[c.id];
+      if (st.a) st.a.e = null;
+      persist(c.id);
+      render();
+    },
+
+    'open-test': (d) => go('test', { id: cur().id, w: +d.w }),
+
+    'test-save': (d) => {
+      const c = cur(), P = DATA[c.id], st = ST[c.id], n = readNum();
+      if (n === null) return notify('Введите число повторений.');
+      L.applyTest(P, st, +d.w, n, Date.now());
+      persist(c.id);
+      haptic('n', 'success');
+      replace('test', { id: c.id, w: +d.w, res: 1 });
+    },
+
+    'test-skip': (d) => {
+      const c = cur();
+      confirmBox('Пропустить тест? Уровень останется прежним.', () => {
+        L.skipTest(DATA[c.id], ST[c.id], +d.w, Date.now());
+        persist(c.id);
+        back();
+      }, 'Пропустить');
+    },
+
+    repeat: (d) => {
+      const c = cur(), w = +d.w;
+      confirmBox(`Повторить неделю ${w}? Выполненные тренировки этой недели будут сброшены (повторения останутся в общей статистике).`, () => {
+        L.resetWeek(DATA[c.id], ST[c.id], w, Date.now());
+        persist(c.id);
+        render();
+      }, 'Повторить неделю');
+    },
+
+    restart: () => {
+      const id = cur().id;
+      confirmBox(`Удалить прогресс «${META[id].name}» и начать заново?`, () => {
+        ST[id] = null;
+        persist(id);
+        resetTo([{ v: 'home' }, { v: 'setup', id }]);
+      }, 'Удалить прогресс', true);
+    }
+  };
+
+  app.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const fn = ACTIONS[b.dataset.act];
+    if (fn) fn(b.dataset);
+  });
+  app.addEventListener('input', (e) => {
+    if (e.target.id === 'num' && cur().v === 'setup') updateTierPrev();
+  });
+  app.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.id === 'num') e.target.blur();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && cur().v === 'workout') render();
+  });
+
+  /* ---------- старт ---------- */
+  function applyTheme() {
+    // Своя чёрная тема независимо от темы Telegram
+    try { tg.setHeaderColor('#000000'); } catch (e) { /* ignore */ }
+    try { tg.setBackgroundColor('#000000'); } catch (e) { /* ignore */ }
+    try { if (tg.setBottomBarColor) tg.setBottomBarColor('#000000'); } catch (e) { /* ignore */ }
+  }
+
+  function init() {
+    if (tg) {
+      try { tg.ready(); tg.expand(); } catch (e) { /* ignore */ }
+      try { if (tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes(); } catch (e) { /* ignore */ }
+      try { if (tg.BackButton) tg.BackButton.onClick(back); } catch (e) { /* ignore */ }
+      try { tg.onEvent('themeChanged', applyTheme); } catch (e) { /* ignore */ }
+      applyTheme();
+    }
+    app.innerHTML = '<p class="hint center" style="padding-top:40vh">Загрузка…</p>';
+    loadAll().then(render);
+  }
+
+  window.__app = { ST, ACTIONS, go, back, render, cur, VIEWS }; // для отладки
+  init();
+})();
+
+</script>
+</body>
+</html>
