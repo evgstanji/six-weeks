@@ -10,34 +10,25 @@
 - `/feedback` — ссылка для предложений;
 - любое другое сообщение — короткая подсказка с кнопкой mini app.
 
-## Настройка
+## Настройка (один раз)
 
-1. В `wrangler.toml` укажите `WEBAPP_URL` (адрес mini app) и `FEEDBACK_URL`
-   (например `https://t.me/ваш_ник`, группа или Google Form). Пустой `FEEDBACK_URL` — кнопки нет.
-   Ту же ссылку впишите в `FEEDBACK_URL` в `index.html`.
-2. Другие боты: добавьте их в массив `OTHER_BOTS` в `worker.js` — они появятся
-   в приветствии отдельным списком.
-3. Разверните воркер:
+Деплой автоматический: GitHub Actions (`.github/workflows/bot.yml`) разворачивает воркер,
+подключает webhook и команды меню при каждом изменении `bot/` в `main`.
+Нужно только добавить два секрета в **Settings → Secrets and variables → Actions**:
 
-```bash
-cd bot
-npx wrangler deploy
-npx wrangler secret put WEBHOOK_SECRET
-```
+1. **`TELEGRAM_BOT_TOKEN`** — токен бота из @BotFather.
+2. **`CLOUDFLARE_API_TOKEN`** — зарегистрируйтесь на dash.cloudflare.com (бесплатно),
+   откройте раздел **Workers & Pages** (это создаст адрес `*.workers.dev`), затем
+   **My Profile → API Tokens → Create Token → шаблон «Edit Cloudflare Workers»**.
 
-4. Подключите webhook (подставьте токен бота, адрес воркера и тот же секрет):
+После этого запустите **Actions → Deploy bot → Run workflow**.
 
-```bash
-curl "https://api.telegram.org/bot<TOKEN>/setWebhook" -d "url=https://six-weeks-bot.<account>.workers.dev" -d "secret_token=<WEBHOOK_SECRET>"
-```
+Что ещё можно поменять:
+- `WEBAPP_URL` и `FEEDBACK_URL` — в `wrangler.toml` (`FEEDBACK_URL` также в `index.html`);
+- другие боты — массив `OTHER_BOTS` в `worker.js`, появятся в приветствии отдельным списком.
 
-5. Команды в меню бота:
-
-```bash
-curl "https://api.telegram.org/bot<TOKEN>/setMyCommands" -H "content-type: application/json" -d '{"commands":[{"command":"start","description":"Начать"},{"command":"feedback","description":"Предложить идею"}]}'
-```
-
-Токен бота в воркер не нужен: ответ отправляется в теле ответа на webhook.
+Токен бота в воркер не передаётся: ответ отправляется в теле ответа на webhook,
+а секрет webhook вычисляется из токена при деплое.
 
 ## Описание до /start (по желанию)
 
