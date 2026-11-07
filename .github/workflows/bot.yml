@@ -30,13 +30,34 @@ jobs:
           [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "::error::Добавьте секрет CLOUDFLARE_API_TOKEN"; exit 1; }
           [ -n "$BOT_TOKEN" ] || { echo "::error::Добавьте секрет TELEGRAM_BOT_TOKEN"; exit 1; }
 
+      - name: Ensure workers.dev subdomain
+        run: |
+          # На новом аккаунте нет поддомена *.workers.dev — регистрируем его сами
+          api=https://api.cloudflare.com/client/v4
+          auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          acc="$CLOUDFLARE_ACCOUNT_ID"
+          [ -n "$acc" ] || acc=$(curl -sS -H "$auth" "$api/accounts" | jq -r '.result[0].id // empty')
+          [ -n "$acc" ] || { echo "::error::Не удалось получить аккаунт Cloudflare — проверьте CLOUDFLARE_API_TOKEN"; exit 1; }
+          sub=$(curl -sS -H "$auth" "$api/accounts/$acc/workers/subdomain" | jq -r '.result.subdomain // empty')
+          if [ -z "$sub" ]; then
+            owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr 'A-Z' 'a-z')
+            for name in "$owner" "$owner-bots" "six-weeks-$RANDOM$RANDOM"; do
+              r=$(curl -sS -X PUT -H "$auth" -H 'content-type: application/json' \
+                "$api/accounts/$acc/workers/subdomain" -d "{\"subdomain\":\"$name\"}")
+              echo "$name: $(echo "$r" | jq -c '{success, errors}')"
+              if [ "$(echo "$r" | jq -r .success)" = true ]; then sub=$name; break; fi
+            done
+          fi
+          [ -n "$sub" ] || { echo "::error::Не удалось создать поддомен workers.dev"; exit 1; }
+          echo "Поддомен: $sub.workers.dev"
+
       - name: Deploy worker
         id: deploy
         run: |
           [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || unset CLOUDFLARE_ACCOUNT_ID
           npx --yes wrangler@4 deploy | tee deploy.log
           url=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' deploy.log | head -1)
-          [ -n "$url" ] || { echo "::error::Не найден адрес воркера. Откройте Workers & Pages в Cloudflare один раз, чтобы создать поддомен workers.dev"; exit 1; }
+          [ -n "$url" ] || { echo "::error::Не найден адрес воркера в выводе wrangler"; exit 1; }
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: Set webhook secret

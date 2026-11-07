@@ -18,7 +18,7 @@
 
 1. **`TELEGRAM_BOT_TOKEN`** — токен бота из @BotFather.
 2. **`CLOUDFLARE_API_TOKEN`** — зарегистрируйтесь на dash.cloudflare.com (бесплатно),
-   откройте раздел **Workers & Pages** (это создаст адрес `*.workers.dev`), затем
+   затем
    **My Profile → API Tokens → Create Token → шаблон «Edit Cloudflare Workers»**.
 
 После этого запустите **Actions → Deploy bot → Run workflow**.
