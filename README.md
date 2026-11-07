@@ -116,6 +116,13 @@ Then paste the generated HTTPS forwarding URL into your Bot settings on `@BotFat
 
 ---
 
+## 🤖 Bot
+
+The `bot/` folder contains a tiny Cloudflare Worker that replies to `/start` with a welcome message
+(free app, workouts run in the mini app, feedback link). It is deployed by GitHub Actions — see `bot/README.md`.
+
+---
+
 ## 🚢 Deployment (100% Free Hosting)
 
 This application can be deployed instantly using GitHub Actions to **GitHub Pages**, **Vercel**, or **Cloudflare Pages**:

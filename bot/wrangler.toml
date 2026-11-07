@@ -1,0 +1,8 @@
+name = "six-weeks-bot"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+WEBAPP_URL = "https://evgstanji.github.io/six-weeks/"
+FEEDBACK_URL = "https://forms.gle/VrJASid43FHE6pqs8"
+# WEBHOOK_SECRET задаётся как секрет: npx wrangler secret put WEBHOOK_SECRET

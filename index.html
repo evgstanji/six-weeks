@@ -192,6 +192,7 @@ button {
 .logrow { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; }
 .logrow:first-child { border-top: 0; }
 
+.btn.small-link { font-size: 15px; margin-top: 4px; }
 .big-emoji { font-size: 64px; text-align: center; margin: 8px 0; }
 /* только opacity: transform у родителя ломает position: fixed у нижней кнопки */
 .fade { animation: fade .18s ease; }
@@ -422,6 +423,9 @@ const ICONS = {"pushups_100": "data:image/webp;base64,UklGRgAOAABXRUJQVlA4WAoAAA
   const insideTelegram = !!(tg && tg.BackButton && tg.platform && tg.platform !== 'unknown');
   const app = document.getElementById('app');
 
+  // Ссылка для предложений (t.me/..., Google Form и т.п.). Пусто — кнопка скрыта.
+  const FEEDBACK_URL = 'https://forms.gle/VrJASid43FHE6pqs8';
+
   const ORDER = ['pushups_100', 'pullups_50', 'situps_200', 'squats_200'];
   const META = {
     pushups_100: { name: 'Отжимания', goalText: '100 отжиманий подряд', defaultMax: 10 },
@@ -644,6 +648,7 @@ const ICONS = {"pushups_100": "data:image/webp;base64,UklGRgAOAABXRUJQVlA4WAoAAA
         <div class="chev">›</div></div>`;
     });
     h += `<p class="hint small center" style="margin-top:20px">Прогресс хранится в вашем Telegram-аккаунте и доступен на всех устройствах.</p>`;
+    if (FEEDBACK_URL) h += `<button class="btn ghost small-link" data-act="feedback">💡 Предложить идею</button>`;
     return h;
   };
 
@@ -1040,6 +1045,15 @@ const ICONS = {"pushups_100": "data:image/webp;base64,UklGRgAOAABXRUJQVlA4WAoAAA
     },
 
     stats: () => go('stats', { id: cur().id }),
+
+    feedback: () => {
+      const tme = /^https:\/\/t\.me\//.test(FEEDBACK_URL);
+      try {
+        if (insideTelegram && tme && tg.openTelegramLink) return tg.openTelegramLink(FEEDBACK_URL);
+        if (insideTelegram && tg.openLink) return tg.openLink(FEEDBACK_URL);
+      } catch (e) { /* ignore */ }
+      window.open(FEEDBACK_URL, '_blank');
+    },
 
     'start-workout': (d) => {
       unlockAudio();
